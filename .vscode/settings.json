@@ -1,0 +1,7 @@
+{
+    "python.testing.pytestArgs": [
+        "scram2plot"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
+}
