@@ -1,5 +1,5 @@
 from weakref import ref
-import numpy
+import numpy as np
 from pylab import *  # @UnusedWildImport
 import matplotlib.pyplot as plt  # @Reimport
 import os.path
@@ -103,17 +103,17 @@ class RefProfiles(object):
     All references in a file class
     """
 
-    def __init__(self, treatment):
-        self.treatment = treatment #TODO: likely remove
+    def __init__(self):
         self.srna_len = 0
+        self.replicates = 0
         self.single_ref_profiles = {}
 
     def __str__(self):
-        return "{0}\t{1}".format(self.treatment, self.single_ref_profiles)
+        return "{0}\t{1}\t{2}".format(self.srna_len, self.replicates, self.single_ref_profiles)
 
     def __eq__(self, other):
         return (
-            self.treatment == other.treatment
+            self.replicates == other.replicates
             and self.single_ref_profiles == other.single_ref_profiles
             and self.srna_len == other.srna_len
         )
@@ -144,7 +144,7 @@ class RefProfiles(object):
                     self.single_ref_profiles[header].ref_len = ref_len
                     self.srna_len = len(srna)
                 self.single_ref_profiles[header].all_alignments.append(sa)
-
+            self.replicates = len(sa.indv_alignments)
 
 
 class DataForPlot(object):
@@ -152,42 +152,32 @@ class DataForPlot(object):
     Data for plotting class
     """
 
-    def __init__(self):
-        self.header = ""
-        self.ref_len = 0
-        self.srna_len = 0
-        self.fwd = []
-        self.rvs = []
+    def __init__(self, ref_profiles, header):
+        self.ref_profiles = ref_profiles
+        self.header = header
+        self.ref_len = ref_profiles.single_ref_profiles[header].ref_len
+        self.srna_len = ref_profiles.srna_len
+        self.fwd = np.zeros((self.ref_len + 1, ref_profiles.replicates), dtype=np.float)
+        self.rvs = np.zeros((self.ref_len + 1, ref_profiles.replicates), dtype=np.float)
 
-    def extract_from_ref_profiles(self, ref_profiles, header):
+    def extract_from_ref_profiles(self):
         """Extracts data from a ref profiles object
 
         Args:
             ref_profiles (RefProfiles): ref profiles object
             header (string): header of the reference sequence
         """
-        self.header = header
-        self.ref_len = ref_profiles.single_ref_profiles[header].ref_len
-        self.srna_len = ref_profiles.srna_len
-        self.fwd=[0]*(self.ref_len+1) #TODO: check if this is best start point
-        self.rvs=[0]*(self.ref_len+1 #TODO: switch to numpy
-)        
-        
-        for sa in ref_profiles.single_ref_profiles[header].all_alignments:
+        for sa in self.ref_profiles.single_ref_profiles[self.header].all_alignments:
             if sa.strand == "+":
                 self.fwd[sa.position] = sa.indv_alignments
             else:
                 self.rvs[sa.position] = sa.indv_alignments
-    
+
     def __str__(self):
         return "{0}\t{1}\t{2}\t{3}\t{4}".format(
-            self.header,
-            self.ref_len,
-            self.srna_len,
-            self.fwd,
-            self.rvs,
+            self.header, self.ref_len, self.srna_len, self.fwd, self.rvs,
         )
-    
+
     def __repr__(self):
         return self.__str__()
 
@@ -196,10 +186,9 @@ class DataForPlot(object):
             self.header == other.header
             and self.ref_len == other.ref_len
             and self.srna_len == other.srna_len
-            and self.fwd == other.fwd
-            and self.rvs == other.rvs
+            and np.array_equal(self.fwd, other.fwd)
+            and np.array_equal(self.rvs, other.rvs)
         )
-    
 
 
 # def profile_plot(nt_list, search_terms, in_files, cutoff, plot_y_lim, win, pub, save_plot, bin_reads):
