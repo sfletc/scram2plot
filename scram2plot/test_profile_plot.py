@@ -1,10 +1,20 @@
 import scram2plot.profile_plot as pp
+
+# import profile_plot as pp
 import numpy as np
 
-t1 = pp.SingleAlignment(pp.DNA("TCGTTGTTACCTGATTGCTCT"), 1, "-", 1, [1.0, 2.0, 3.0])
-t2 = pp.SingleAlignment(pp.DNA("AGAGCAATCAGGTAACAACGA"), 1, "+", 1, [2.0, 4.0, 6.0])
-t3 = pp.SingleAlignment(pp.DNA("TCGTTGTTACCTGATTGCTCT"), 1, "-", 1, [1.0, 2.0, 3.0])
-t4 = pp.SingleAlignment(pp.DNA("AGAGCAATCAGGTAACAACGA"), 1, "+", 1, [2.0, 4.0, 6.0])
+t1 = pp.SingleAlignment(
+    pp.DNA("TCGTTGTTACCTGATTGCTCT"), 1, "-", 1, np.array([1.0, 2.0, 3.0])
+)
+t2 = pp.SingleAlignment(
+    pp.DNA("AGAGCAATCAGGTAACAACGA"), 1, "+", 1, np.array([2.0, 4.0, 6.0])
+)
+t3 = pp.SingleAlignment(
+    pp.DNA("TCGTTGTTACCTGATTGCTCT"), 1, "-", 1, np.array([1.0, 2.0, 3.0])
+)
+t4 = pp.SingleAlignment(
+    pp.DNA("AGAGCAATCAGGTAACAACGA"), 1, "+", 1, np.array([2.0, 4.0, 6.0])
+)
 p1 = pp.SingleRefProfile()
 p1.ref_len = 3
 p1.all_alignments = [t1, t2]
@@ -24,6 +34,10 @@ def test_file_load():
     a = pp.RefProfiles()
     a.load_single_ref_profiles("scram2plot/test_data/profile_test_data21.csv")
     assert a == r
+
+
+def test_mean():
+    assert t1.mean_alignments() == 2.0
 
 
 def test_extract_from_profiles():

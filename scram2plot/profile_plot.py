@@ -3,7 +3,8 @@ import numpy as np
 from pylab import *  # @UnusedWildImport
 import matplotlib.pyplot as plt  # @Reimport
 import os.path
-from scipy.stats import sem, norm
+
+# from scipy.stats import sem, norm
 import csv
 
 
@@ -49,10 +50,12 @@ class SingleAlignment(object):
         return len(self.srna)
 
     def standard_error(self):
-        return sem(self.indv_alignments)
+        return np.std(self.indv_alignments, ddof=1) / np.sqrt(
+            np.size(self.indv_alignments)
+        )
 
     def mean_alignments(self):
-        return norm.mean(self.indv_alignments)
+        return np.mean(self.indv_alignments)
 
     def __str__(self):
         return "{0}\t{1}\t{2}\t{3}\t{4}".format(
@@ -72,7 +75,7 @@ class SingleAlignment(object):
             and self.position == other.position
             and self.strand == other.strand
             and self.times_aligned == other.times_aligned
-            and self.indv_alignments == other.indv_alignments
+            and np.array_equal(self.indv_alignments, other.indv_alignments)
         )
 
 
@@ -109,7 +112,9 @@ class RefProfiles(object):
         self.single_ref_profiles = {}
 
     def __str__(self):
-        return "{0}\t{1}\t{2}".format(self.srna_len, self.replicates, self.single_ref_profiles)
+        return "{0}\t{1}\t{2}".format(
+            self.srna_len, self.replicates, self.single_ref_profiles
+        )
 
     def __eq__(self, other):
         return (
@@ -135,7 +140,7 @@ class RefProfiles(object):
                 position = int(row[3])
                 strand = row[4]
                 times_aligned = int(row[5])
-                indv_alignments = [float(x) for x in row[6:]]
+                indv_alignments = np.array([float(x) for x in row[6:]])
                 sa = SingleAlignment(
                     srna, position, strand, times_aligned, indv_alignments
                 )
