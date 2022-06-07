@@ -162,10 +162,12 @@ class DataForPlot(object):
         self.header = header
         self.ref_len = ref_profiles.single_ref_profiles[header].ref_len
         self.srna_len = ref_profiles.srna_len
-        self.fwd = np.zeros((self.ref_len + 1, ref_profiles.replicates), dtype=np.float)
-        self.rvs = np.zeros((self.ref_len + 1, ref_profiles.replicates), dtype=np.float)
-
-    def extract_from_ref_profiles(self):
+        self.replicates = ref_profiles.replicates
+        self.fwd = np.zeros((self.ref_len + 1, self.replicates), dtype=np.float)
+        self.rvs = np.zeros((self.ref_len + 1, self.replicates), dtype=np.float)
+        self._extract_from_ref_profiles()
+    
+    def _extract_from_ref_profiles(self):
         """Extracts data from a ref profiles object
 
         Args:
@@ -178,7 +180,27 @@ class DataForPlot(object):
             else:
                 self.rvs[sa.position] = sa.indv_alignments
 
-    def __str__(self):
+    def convert_to_coverage(self):
+        """
+        TODO: Fix
+        """
+        self.fwd = self._coverage_per_strand(self.fwd)
+        self.rvs = self._coverage_per_strand(self.rvs)
+
+    def _coverage_per_strand(self, old_array): #TODO: Fix for better use of numpy
+        """
+
+        Args:
+            old_array (_type_): _description_
+        """
+        new_arr= np.zeros((self.ref_len + 1, self.replicates), dtype=np.float)
+        for i in range(len(new_arr)):
+            for j in range(len(new_arr[i])):
+                new_arr[i:i+self.srna_len ,j]+=old_array[i,j]
+        return new_arr
+    
+    
+    def __str__(self): #TODO: update
         return "{0}\t{1}\t{2}\t{3}\t{4}".format(
             self.header, self.ref_len, self.srna_len, self.fwd, self.rvs,
         )
@@ -186,7 +208,7 @@ class DataForPlot(object):
     def __repr__(self):
         return self.__str__()
 
-    def __eq__(self, other):
+    def __eq__(self, other): #TODO: update
         return (
             self.header == other.header
             and self.ref_len == other.ref_len
