@@ -47,7 +47,7 @@ def test_extract_from_profiles():
     assert b == s
 
 
-def test_convert_to_coverage():
+def test_convert_to_coverage(): #TODO: test rvs
     t4 = pp.SingleAlignment(pp.DNA("AAA"), 1, "+", 1, np.array([1.0, 2.0, 3.0]))
     t5 = pp.SingleAlignment(pp.DNA("AAT"), 2, "+", 1, np.array([1.0, 2.0, 3.0]))
     p3 = pp.SingleRefProfile()

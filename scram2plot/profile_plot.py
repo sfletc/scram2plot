@@ -49,7 +49,7 @@ class SingleAlignment(object):
     def srna_len(self):
         return len(self.srna)
 
-    def standard_error(self):
+    def standard_error(self): #TODO: check - likely don't neeed here
         return np.std(self.indv_alignments, ddof=1) / np.sqrt(
             np.size(self.indv_alignments)
         )
@@ -199,7 +199,22 @@ class DataForPlot(object):
                 new_arr[i:i+self.srna_len ,j]+=old_array[i,j]
         return new_arr
     
+    def convert_to_error_bounds(self): #TODO: document and test
+        """_summary_
+        """
+        self.fwd = self._error_bounds(self.fwd)
+        self.rvs = self._error_bounds(self.rvs)
     
+    def _error_bounds(self, old_array): #TODO: document and test
+        """_summary_
+        """
+        new_arr= np.zeros((self.ref_len + 1, 2), dtype=np.float)
+        for i in range(len(new_arr)):
+            new_arr[i,0]=np.mean(old_array[i,:])-(np.std(old_array[i,:])/np.sqrt(self.replicates))
+            new_arr[i,1]=np.mean(old_array[i,:])+(np.std(old_array[i,:])/np.sqrt(self.replicates))
+        return new_arr        
+
+
     def __str__(self): #TODO: update
         return "{0}\t{1}\t{2}\t{3}\t{4}".format(
             self.header, self.ref_len, self.srna_len, self.fwd, self.rvs,
