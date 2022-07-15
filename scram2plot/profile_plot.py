@@ -163,8 +163,10 @@ class DataForPlot(object):
         self.ref_len = ref_profiles.single_ref_profiles[header].ref_len
         self.srna_len = ref_profiles.srna_len
         self.replicates = ref_profiles.replicates
-        self.fwd = np.zeros((self.ref_len + 1, self.replicates), dtype=np.float)
-        self.rvs = np.zeros((self.ref_len + 1, self.replicates), dtype=np.float)
+        self.fwd = np.zeros((self.ref_len + 1, self.replicates), dtype=float)
+        self.rvs = np.zeros((self.ref_len + 1, self.replicates), dtype=float)
+        self.x_axis = list(range(len(self.fwd)))
+        self.y_flat = []
         self._extract_from_ref_profiles()
     
     def _extract_from_ref_profiles(self):
@@ -193,7 +195,7 @@ class DataForPlot(object):
         Args:
             old_array (_type_): _description_
         """
-        new_arr= np.zeros((self.ref_len + 1, self.replicates), dtype=np.float)
+        new_arr= np.zeros((self.ref_len + 1, self.replicates), dtype=float)
         for i in range(len(new_arr)):
             for j in range(len(new_arr[i])):
                 new_arr[i:i+self.srna_len ,j]+=old_array[i,j]
@@ -208,12 +210,35 @@ class DataForPlot(object):
     def _error_bounds(self, old_array): #TODO: document and test
         """_summary_
         """
-        new_arr= np.zeros((self.ref_len + 1, 2), dtype=np.float)
+        new_arr= np.zeros((self.ref_len + 1, 2), dtype=float)
         for i in range(len(new_arr)):
             new_arr[i,0]=np.mean(old_array[i,:])-(np.std(old_array[i,:])/np.sqrt(self.replicates))
             new_arr[i,1]=np.mean(old_array[i,:])+(np.std(old_array[i,:])/np.sqrt(self.replicates))
         return new_arr        
 
+    def flatten(self, d = 1):
+        if d == 1:
+            for i in range(self.fwd.shape[1]):
+                self.y_flat.append(self.fwd[:,[i]].flatten())
+                self.y_flat.append(-self.rvs[:,[i]].flatten())
+        else:
+            for i in range(self.fwd.shape[1]):
+                self.y_flat.append(self._smoothTriangle(self.fwd[:,[i]].flatten(),d))
+                self.y_flat.append(self._smoothTriangle(-self.rvs[:,[i]].flatten(),d))
+    
+    @staticmethod
+    def _smoothTriangle(data, degree):
+        triangle=np.concatenate((np.arange(degree + 1), np.arange(degree)[::-1])) # up then down
+        smoothed=[]
+
+        for i in range(degree, len(data) - degree * 2):
+            point=data[i:i + len(triangle)] * triangle
+            smoothed.append(np.sum(point)/np.sum(triangle))
+        # Handle boundaries
+        smoothed=[smoothed[0]]*int(degree + degree/2) + smoothed #TODO: this can be better
+        while len(smoothed) < len(data):
+            smoothed.append(smoothed[-1])
+        return smoothed   
 
     def __str__(self): #TODO: update
         return "{0}\t{1}\t{2}\t{3}\t{4}".format(
