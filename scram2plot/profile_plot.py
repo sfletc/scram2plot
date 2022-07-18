@@ -49,7 +49,7 @@ class SingleAlignment(object):
     def srna_len(self):
         return len(self.srna)
 
-    def standard_error(self): #TODO: check - likely don't neeed here
+    def standard_error(self):  # TODO: check - likely don't neeed here
         return np.std(self.indv_alignments, ddof=1) / np.sqrt(
             np.size(self.indv_alignments)
         )
@@ -168,7 +168,7 @@ class DataForPlot(object):
         self.x_axis = list(range(len(self.fwd)))
         self.y_flat = []
         self._extract_from_ref_profiles()
-    
+
     def _extract_from_ref_profiles(self):
         """Extracts data from a ref profiles object
 
@@ -182,73 +182,90 @@ class DataForPlot(object):
             else:
                 self.rvs[sa.position] = sa.indv_alignments
 
-    def convert_to_coverage(self):
+    def convert_to_coverage(self, abund=True):
         """
         TODO: Fix
         """
-        self.fwd = self._coverage_per_strand(self.fwd)
-        self.rvs = self._coverage_per_strand(self.rvs)
+        self.fwd = self._coverage_per_strand(self.fwd, abund)
+        self.rvs = self._coverage_per_strand(self.rvs, abund)
 
-    def _coverage_per_strand(self, old_array): #TODO: Fix for better use of numpy
+    def _coverage_per_strand(
+        self, old_array, abund
+    ):  # TODO: Fix for better use of numpy
         """
 
         Args:
             old_array (_type_): _description_
         """
-        new_arr= np.zeros((self.ref_len + 1, self.replicates), dtype=float)
-        for i in range(len(new_arr)):
+        new_arr = np.zeros((old_array.shape), dtype=float)
+        for i in range(len(new_arr) - self.srna_len + 1):
             for j in range(len(new_arr[i])):
-                new_arr[i:i+self.srna_len ,j]+=old_array[i,j]
+                if not abund:
+                    new_arr[i : i + self.srna_len, j] += old_array[i, j]
+                else:
+                    for k in range(self.srna_len):
+                        if old_array[i, j] > new_arr[i + k, j]:
+                            new_arr[i + k, j] = old_array[i, j]
         return new_arr
-    
-    def convert_to_error_bounds(self): #TODO: document and test
-        """_summary_
-        """
+
+    def convert_to_error_bounds(self):  # TODO: document and test
+        """_summary_"""
         self.fwd = self._error_bounds(self.fwd)
         self.rvs = self._error_bounds(self.rvs)
-    
-    def _error_bounds(self, old_array): #TODO: document and test
-        """_summary_
-        """
-        new_arr= np.zeros((self.ref_len + 1, 2), dtype=float)
-        for i in range(len(new_arr)):
-            new_arr[i,0]=np.mean(old_array[i,:])-(np.std(old_array[i,:])/np.sqrt(self.replicates))
-            new_arr[i,1]=np.mean(old_array[i,:])+(np.std(old_array[i,:])/np.sqrt(self.replicates))
-        return new_arr        
 
-    def flatten(self, d = 1):
+    def _error_bounds(self, old_array):  # TODO: document and test
+        """_summary_"""
+        new_arr = np.zeros((self.ref_len + 1, 2), dtype=float)
+        for i in range(len(new_arr)):
+            new_arr[i, 0] = np.mean(old_array[i, :]) - (
+                np.std(old_array[i, :]) / np.sqrt(self.replicates)
+            )
+            new_arr[i, 1] = np.mean(old_array[i, :]) + (
+                np.std(old_array[i, :]) / np.sqrt(self.replicates)
+            )
+        return new_arr
+
+    def flatten(self, d=1):
         if d == 1:
             for i in range(self.fwd.shape[1]):
-                self.y_flat.append(self.fwd[:,[i]].flatten())
-                self.y_flat.append(-self.rvs[:,[i]].flatten())
+                self.y_flat.append(self.fwd[:, [i]].flatten())
+                self.y_flat.append(-self.rvs[:, [i]].flatten())
         else:
             for i in range(self.fwd.shape[1]):
-                self.y_flat.append(self._smoothTriangle(self.fwd[:,[i]].flatten(),d))
-                self.y_flat.append(self._smoothTriangle(-self.rvs[:,[i]].flatten(),d))
-    
+                self.y_flat.append(self._smoothTriangle(self.fwd[:, [i]].flatten(), d))
+                self.y_flat.append(self._smoothTriangle(-self.rvs[:, [i]].flatten(), d))
+
     @staticmethod
     def _smoothTriangle(data, degree):
-        triangle=np.concatenate((np.arange(degree + 1), np.arange(degree)[::-1])) # up then down
-        smoothed=[]
+        triangle = np.concatenate(
+            (np.arange(degree + 1), np.arange(degree)[::-1])
+        )  # up then down
+        smoothed = []
 
         for i in range(degree, len(data) - degree * 2):
-            point=data[i:i + len(triangle)] * triangle
-            smoothed.append(np.sum(point)/np.sum(triangle))
+            point = data[i : i + len(triangle)] * triangle
+            smoothed.append(np.sum(point) / np.sum(triangle))
         # Handle boundaries
-        smoothed=[smoothed[0]]*int(degree + degree/2) + smoothed #TODO: this can be better
+        smoothed = [smoothed[0]] * int(
+            degree + degree / 2
+        ) + smoothed  # TODO: this can be better
         while len(smoothed) < len(data):
             smoothed.append(smoothed[-1])
-        return smoothed   
+        return smoothed
 
-    def __str__(self): #TODO: update
+    def __str__(self):  # TODO: update
         return "{0}\t{1}\t{2}\t{3}\t{4}".format(
-            self.header, self.ref_len, self.srna_len, self.fwd, self.rvs,
+            self.header,
+            self.ref_len,
+            self.srna_len,
+            self.fwd,
+            self.rvs,
         )
 
     def __repr__(self):
         return self.__str__()
 
-    def __eq__(self, other): #TODO: update
+    def __eq__(self, other):  # TODO: update
         return (
             self.header == other.header
             and self.ref_len == other.ref_len
@@ -652,4 +669,3 @@ class DataForPlot(object):
 #         return "black"
 #     else:
 #         return hex_dict[nt]
-
