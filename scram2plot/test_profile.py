@@ -1,4 +1,4 @@
-import scram2plot.profile_plot as pp
+import scram2plot.profile as pp
 
 # import profile_plot as pp
 import numpy as np

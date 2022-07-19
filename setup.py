@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='scram2plot',
-      version='0.1.0',
+      version='0.1.1',
       description='scram2plot',
       author='Stephen Fletcher',
       author_email='s.fletcher@uq.edu.au',
@@ -23,10 +23,6 @@ setup(name='scram2plot',
 
     # Specify the Python versions you support here. In particular, ensure
     # that you indicate whether you support Python 2, Python 3 or both.
-    'Programming Language :: Python :: 3.11'],
-      install_requires=['numpy','matplotlib','bokeh'],
-      scripts=['scram_plot/scram2plot.py',
-      'scram_plot/profile2plot.py',
-      'scram_plot/compare2plot.py'
-      ],
+    'Programming Language :: Python :: 3.10'],
+      install_requires=['numpy','matplotlib'],
       zip_safe=False)
